@@ -1,26 +1,86 @@
 <?php
 require_once '../config/koneksi.php';
 
+// Authentication check
 if (!isLoggedIn() || !isAdmin()) {
     redirect('../login.php');
 }
 
-// Get statistics
- $stmt = $pdo->query("SELECT COUNT(*) as total FROM konten WHERE kategori = 'berita'");
- $beritaCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+// Get statistics for dashboard
+try {
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM konten WHERE kategori = 'berita'");
+    $beritaCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
- $stmt = $pdo->query("SELECT COUNT(*) as total FROM konten WHERE kategori = 'artikel'");
- $artikelCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM konten WHERE kategori = 'artikel'");
+    $artikelCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
- $stmt = $pdo->query("SELECT COUNT(*) as total FROM konten WHERE kategori = 'kegiatan'");
- $kegiatanCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM konten WHERE kategori = 'kegiatan'");
+    $kegiatanCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
- $stmt = $pdo->query("SELECT COUNT(*) as total FROM galeri");
- $galeriCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM galeri");
+    $galeriCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+} catch (PDOException $e) {
+    // Set all counts to 0 if there's an error
+    $beritaCount = $artikelCount = $kegiatanCount = $galeriCount = 0;
+    $errorMessage = "Terjadi kesalahan saat mengambil data statistik: " . $e->getMessage();
+}
 
-// Get recent content
- $stmt = $pdo->query("SELECT * FROM konten ORDER BY created_at DESC LIMIT 5");
- $recentContent = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Get recent content for dashboard
+try {
+    $stmt = $pdo->query("SELECT * FROM konten ORDER BY created_at DESC LIMIT 5");
+    $recentContent = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $recentContent = [];
+    $errorMessage = isset($errorMessage) ? $errorMessage : "Terjadi kesalahan saat memuat konten terbaru: " . $e->getMessage();
+}
+
+// Get full lists per category for CRUD management
+try {
+    $stmt = $pdo->query("SELECT * FROM konten WHERE kategori = 'berita' ORDER BY created_at DESC");
+    $beritaList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $pdo->query("SELECT * FROM konten WHERE kategori = 'artikel' ORDER BY created_at DESC");
+    $artikelList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $pdo->query("SELECT * FROM konten WHERE kategori = 'kegiatan' ORDER BY created_at DESC");
+    $kegiatanList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Fetch gallery items for management tab
+    $stmt = $pdo->query("SELECT * FROM galeri ORDER BY created_at DESC");
+    $galeriList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $beritaList = $artikelList = $kegiatanList = [];
+    $errorMessage = isset($errorMessage) ? $errorMessage : "Terjadi kesalahan saat memuat data kategori: " . $e->getMessage();
+}
+
+// Helper function to generate image HTML with fallback
+function generateImageHtml($content) {
+    $imgHtml = '<span class="text-muted text-center d-block">Tidak ada gambar</span>';
+    $imgField = null;
+    
+    // Check possible image field names in the database
+    foreach (['gambar','image','foto','thumbnail','img','gambar_path'] as $f) {
+        if (!empty($content[$f])) { 
+            $imgField = $f; 
+            break; 
+        }
+    }
+    
+    if ($imgField) {
+        $src = $content[$imgField];
+        $webSrc = '../assets/img/' . basename($src);
+        
+        // Create img tag with fallback
+        $imgHtml = '
+        <img src="'.htmlspecialchars($webSrc).'" 
+             alt="thumbnail" 
+             style="max-width:100px; max-height:70px; object-fit:cover; border-radius:4px; display:block; margin:0 auto;"
+             onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2270%22%3E%3Crect fill=%22%23ccc%22 width=%22100%22 height=%2270%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E\'">
+        ';
+    }
+    
+    return $imgHtml;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -32,11 +92,13 @@ if (!isLoggedIn() || !isAdmin()) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
     <style>
+        /* General Styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
         }
         
+        /* Sidebar Styles */
         .sidebar {
             position: fixed;
             top: 0;
@@ -73,7 +135,7 @@ if (!isLoggedIn() || !isAdmin()) {
             margin-bottom: 5px;
         }
         
-        .sidebar-menu a {
+        .sidebar-menu a, .btn-toggle {
             display: block;
             padding: 12px 20px;
             color: rgba(255, 255, 255, 0.8);
@@ -81,12 +143,20 @@ if (!isLoggedIn() || !isAdmin()) {
             transition: all 0.3s;
         }
         
-        .sidebar-menu a:hover, .sidebar-menu a.active {
+        .btn-toggle {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active, 
+        .btn-toggle:hover, .btn-toggle.active {
             background-color: rgba(0, 0, 0, 0.2);
             color: white;
         }
         
-        .sidebar-menu a i {
+        .sidebar-menu a i, .btn-toggle i {
             width: 25px;
             text-align: center;
             margin-right: 10px;
@@ -107,6 +177,7 @@ if (!isLoggedIn() || !isAdmin()) {
             font-size: 0.9rem;
         }
         
+        /* Main Content Styles */
         .main-content {
             margin-left: 250px;
             padding: 20px;
@@ -124,7 +195,8 @@ if (!isLoggedIn() || !isAdmin()) {
             align-items: center;
         }
         
-        .dashboard-card {
+        /* Card Styles */
+        .dashboard-card, .card {
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: all 0.3s;
@@ -136,38 +208,20 @@ if (!isLoggedIn() || !isAdmin()) {
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
-        .card {
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border: none;
-        }
-        
         .card-header {
             background-color: white;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             font-weight: 600;
         }
         
+        /* Table Styles */
         .table th {
             border-top: none;
             font-weight: 600;
             color: #495057;
         }
         
-        .btn-toggle {
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            width: 100%;
-            text-align: left;
-        }
-        
-        .btn-toggle:hover, .btn-toggle.active {
-            background-color: rgba(0, 0, 0, 0.2);
-            color: white;
-        }
-        
+        /* User Info Styles */
         .user-info {
             display: flex;
             align-items: center;
@@ -186,6 +240,7 @@ if (!isLoggedIn() || !isAdmin()) {
             font-weight: bold;
         }
         
+        /* Mobile Toggle */
         .mobile-toggle {
             display: none;
             position: fixed;
@@ -199,6 +254,7 @@ if (!isLoggedIn() || !isAdmin()) {
             padding: 8px 12px;
         }
         
+        /* Responsive Styles */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -272,6 +328,13 @@ if (!isLoggedIn() || !isAdmin()) {
                 </div>
             </div>
         </div>
+        
+        <!-- Error Message (if any) -->
+        <?php if (isset($errorMessage)): ?>
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle"></i> <?php echo $errorMessage; ?>
+            </div>
+        <?php endif; ?>
         
         <!-- Statistics Cards -->
         <div class="row mb-4">
@@ -365,7 +428,7 @@ if (!isLoggedIn() || !isAdmin()) {
         </div>
 
         <!-- Recent Content -->
-        <div class="row">
+        <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
@@ -385,46 +448,221 @@ if (!isLoggedIn() || !isAdmin()) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($recentContent as $content): ?>
-                                        <?php
-                                            // Tentukan field gambar yang mungkin digunakan di DB
-                                            $imgHtml = '<span class="text-muted text-center d-block">Tidak ada gambar</span>';
-                                            $imgField = null;
-                                            foreach (['gambar','image','foto','thumbnail','img','gambar_path'] as $f) {
-                                                if (!empty($content[$f])) { $imgField = $f; break; }
-                                            }
-                                            if ($imgField) {
-                                                $src = $content[$imgField];
-                                                // Path default ke assets/img (tempat upload file)
-                                                $webSrc = '../assets/img/' . basename($src);
-                                                
-                                                // Buat tag img dengan fallback
-                                                $imgHtml = '
-                                                <img src="'.htmlspecialchars($webSrc).'" 
-                                                     alt="thumbnail" 
-                                                     style="max-width:100px; max-height:70px; object-fit:cover; border-radius:4px; display:block; margin:0 auto;"
-                                                     onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2270%22%3E%3Crect fill=%22%23ccc%22 width=%22100%22 height=%2270%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E\'">
-                                                ';
-                                            }
-                                        ?>
+                                    <?php if (empty($recentContent)): ?>
                                         <tr>
-                                            <td style="vertical-align:middle"><?php echo htmlspecialchars($content['judul']); ?></td>
-                                            <td style="vertical-align:middle"><?php echo $imgHtml; ?></td>
-                                            <td style="vertical-align:middle"><span class="badge bg-primary"><?php echo ucfirst($content['kategori']); ?></span></td>
-                                            <td style="vertical-align:middle"><?php echo htmlspecialchars($content['penulis']); ?></td>
-                                            <td style="vertical-align:middle"><?php echo date('d M Y', strtotime($content['created_at'])); ?></td>
-                                            <td style="vertical-align:middle">
-                                                <a href="edit_artikel.php?id=<?php echo $content['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                                <a href="hapus_artikel.php?id=<?php echo $content['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Apakah Anda yakin?')">
-                                                    <i class="fas fa-trash"></i> Hapus
-                                                </a>
-                                            </td>
+                                            <td colspan="6" class="text-center">Tidak ada konten yang tersedia</td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <?php foreach ($recentContent as $content): ?>
+                                            <tr>
+                                                <td style="vertical-align:middle"><?php echo htmlspecialchars($content['judul']); ?></td>
+                                                <td style="vertical-align:middle"><?php echo generateImageHtml($content); ?></td>
+                                                <td style="vertical-align:middle"><span class="badge bg-primary"><?php echo ucfirst($content['kategori']); ?></span></td>
+                                                <td style="vertical-align:middle"><?php echo htmlspecialchars($content['penulis']); ?></td>
+                                                <td style="vertical-align:middle"><?php echo date('d M Y', strtotime($content['created_at'])); ?></td>
+                                                <td style="vertical-align:middle">
+                                                    <a href="edit_artikel.php?id=<?php echo $content['id']; ?>" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </a>
+                                                    <a href="hapus_artikel.php?id=<?php echo $content['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Apakah Anda yakin?')">
+                                                        <i class="fas fa-trash"></i> Hapus
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Management -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Kelola Konten per Kategori</h5>
+                        <div>
+                            <a href="tambah_artikel.php?cat=berita" class="btn btn-sm btn-primary me-1">Tambah Berita</a>
+                            <a href="tambah_artikel.php?cat=artikel" class="btn btn-sm btn-success me-1">Tambah Artikel</a>
+                            <a href="tambah_artikel.php?cat=kegiatan" class="btn btn-sm btn-warning">Tambah Kegiatan</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="kategoriTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tab-berita" data-bs-toggle="tab" data-bs-target="#berita" type="button" role="tab">Berita (<?php echo count($beritaList); ?>)</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-artikel" data-bs-toggle="tab" data-bs-target="#artikel" type="button" role="tab">Artikel (<?php echo count($artikelList); ?>)</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-kegiatan" data-bs-toggle="tab" data-bs-target="#kegiatan" type="button" role="tab">Kegiatan (<?php echo count($kegiatanList); ?>)</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-galeri" data-bs-toggle="tab" data-bs-target="#galeri" type="button" role="tab">Galeri (<?php echo isset($galeriList) ? count($galeriList) : 0; ?>)</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content mt-3">
+                            <!-- Berita Tab -->
+                            <div class="tab-pane fade show active" id="berita" role="tabpanel">
+                                <?php if (empty($beritaList)): ?>
+                                    <div class="alert alert-info">Tidak ada berita yang tersedia</div>
+                                <?php else: ?>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Judul</th>
+                                                    <th>Gambar</th>
+                                                    <th>Penulis</th>
+                                                    <th>Tanggal</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($beritaList as $c): ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($c['judul']); ?></td>
+                                                        <td style="width:120px">
+                                                            <img src="../assets/img/<?php echo htmlspecialchars(basename($c['gambar'])); ?>" 
+                                                                 style="max-width:100px; max-height:60px; object-fit:cover;" 
+                                                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2270%22%3E%3Crect fill=%22%23ccc%22 width=%22100%22 height=%2270%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'"/>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($c['penulis']); ?></td>
+                                                        <td><?php echo date('d M Y', strtotime($c['created_at'])); ?></td>
+                                                        <td>
+                                                            <a href="../kategori/berita.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-secondary" target="_blank">View</a>
+                                                            <a href="edit_artikel.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-primary">Edit</a>
+                                                            <a href="hapus_artikel.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus konten ini?')">Hapus</a>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Artikel Tab -->
+                            <div class="tab-pane fade" id="artikel" role="tabpanel">
+                                <?php if (empty($artikelList)): ?>
+                                    <div class="alert alert-info">Tidak ada artikel yang tersedia</div>
+                                <?php else: ?>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Judul</th>
+                                                    <th>Gambar</th>
+                                                    <th>Penulis</th>
+                                                    <th>Tanggal</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($artikelList as $c): ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($c['judul']); ?></td>
+                                                        <td style="width:120px">
+                                                            <img src="../assets/img/<?php echo htmlspecialchars(basename($c['gambar'])); ?>" 
+                                                                 style="max-width:100px; max-height:60px; object-fit:cover;" 
+                                                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2270%22%3E%3Crect fill=%22%23ccc%22 width=%22100%22 height=%2270%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'"/>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($c['penulis']); ?></td>
+                                                        <td><?php echo date('d M Y', strtotime($c['created_at'])); ?></td>
+                                                        <td>
+                                                            <a href="../kategori/artikel.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-secondary" target="_blank">View</a>
+                                                            <a href="edit_artikel.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-primary">Edit</a>
+                                                            <a href="hapus_artikel.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus konten ini?')">Hapus</a>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Kegiatan Tab -->
+                            <div class="tab-pane fade" id="kegiatan" role="tabpanel">
+                                <?php if (empty($kegiatanList)): ?>
+                                    <div class="alert alert-info">Tidak ada kegiatan yang tersedia</div>
+                                <?php else: ?>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Judul</th>
+                                                    <th>Gambar</th>
+                                                    <th>Penulis</th>
+                                                    <th>Tanggal</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($kegiatanList as $c): ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($c['judul']); ?></td>
+                                                        <td style="width:120px">
+                                                            <img src="../assets/img/<?php echo htmlspecialchars(basename($c['gambar'])); ?>" 
+                                                                 style="max-width:100px; max-height:60px; object-fit:cover;" 
+                                                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2270%22%3E%3Crect fill=%22%23ccc%22 width=%22100%22 height=%2270%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'"/>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($c['penulis']); ?></td>
+                                                        <td><?php echo date('d M Y', strtotime($c['created_at'])); ?></td>
+                                                        <td>
+                                                            <a href="../kategori/kegiatan.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-secondary" target="_blank">View</a>
+                                                            <a href="edit_artikel.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-primary">Edit</a>
+                                                            <a href="hapus_artikel.php?id=<?php echo $c['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus konten ini?')">Hapus</a>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <!-- Galeri Tab -->
+                        <div class="tab-pane fade" id="galeri" role="tabpanel">
+                            <?php if (empty($galeriList)): ?>
+                                <div class="alert alert-info">Tidak ada foto di galeri.</div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Judul</th>
+                                                <th>Gambar</th>
+                                                <th>Deskripsi</th>
+                                                <th>Tanggal</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($galeriList as $g): ?>
+                                                <tr>
+                                                    <td><?php echo htmlspecialchars($g['judul']); ?></td>
+                                                    <td style="width:120px">
+                                                        <img src="../assets/img/<?php echo htmlspecialchars(basename($g['gambar'])); ?>" style="max-width:100px; max-height:60px; object-fit:cover;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2270%22%3E%3Crect fill=%22%23ccc%22 width=%22100%22 height=%2270%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'"/>
+                                                    </td>
+                                                    <td><?php echo htmlspecialchars($g['deskripsi']); ?></td>
+                                                    <td><?php echo date('d M Y', strtotime($g['created_at'])); ?></td>
+                                                    <td>
+                                                        <a href="../galeri/galeri.php?id=<?php echo $g['id']; ?>" class="btn btn-sm btn-outline-secondary" target="_blank">View</a>
+                                                        <a href="edit_galeri.php?id=<?php echo $g['id']; ?>" class="btn btn-sm btn-outline-primary">Edit</a>
+                                                        <a href="hapus_galeri.php?id=<?php echo $g['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus item galeri ini?')">Hapus</a>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
