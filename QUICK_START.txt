@@ -1,0 +1,65 @@
+# 🚀 QUICK START - 5 Menit Setup
+
+## Langkah 1: Verifikasi Setup (1 menit)
+Buka di browser:
+```
+http://localhost/web-sma/quick-check.php
+```
+✅ Pastikan semua status "OK" atau "Available"
+
+## Langkah 2: Generate Placeholder (1 menit) - OPTIONAL
+Jika gambar belum ada, buat placeholder:
+```
+http://localhost/web-sma/generate-placeholders.php
+```
+✅ Tunggu script selesai
+
+## Langkah 3: Cek Dashboard (1 menit)
+Buka admin dashboard:
+```
+http://localhost/web-sma/admin/dashboard.php
+```
+**Login:**
+- Username: `admin`
+- Password: `admin123`
+
+✅ Lihat tabel "Konten Terbaru" → kolom "Gambar" menampilkan thumbnail
+
+## Langkah 4: Test Upload (1 menit)
+1. Di dashboard, klik "Tambah Berita"
+2. Isi form dengan data dummy
+3. Pilih file gambar lokal
+4. Klik Submit
+✅ Gambar otomatis tersimpan dan tampil di dashboard
+
+## Langkah 5: Lihat di Public Pages (1 menit)
+- Kategori: `http://localhost/web-sma/kategori/berita.php`
+- Galeri: `http://localhost/web-sma/galeri/galeri.php`
+
+✅ Gambar harus muncul dengan baik
+
+---
+
+## Troubleshooting Cepat
+
+**Gambar tidak muncul?**
+→ Run `quick-check.php` untuk diagnosa
+
+**Upload gagal?**
+→ Cek folder `assets/img/` writable dan ukuran file < 5MB
+
+**Placeholder error?**
+→ Verifikasi extension `php-gd` terinstall
+
+---
+
+## Dokumentasi Lengkap
+
+- 📖 **Main Guide:** `README.md`
+- 🖼️ **Image Setup:** `SETUP_GAMBAR.md`
+- ⚡ **Developer Ref:** `QUICK_REFERENCE.md`
+- 🏠 **Doc Hub:** `index-docs.html`
+
+---
+
+**Butuh bantuan?** → Lihat `FINAL_CHECKLIST.md` atau `IMPLEMENTATION_REPORT.md`

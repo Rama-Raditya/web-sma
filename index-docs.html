@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>web-sma - Documentation Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .icon-box {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .badge-custom {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .badge-new { background: #28a745; color: white; }
+        .badge-updated { background: #007bff; color: white; }
+        .badge-guide { background: #ff9800; color: white; }
+        h1 { color: white; margin-bottom: 40px; }
+        .nav-section { margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-5">
+            <i class="fas fa-school me-3"></i>web-sma
+            <br><small>Documentation Hub & Quick Links</small>
+        </h1>
+
+        <!-- Dokumentasi Section -->
+        <div class="nav-section">
+            <h2 class="text-white mb-4"><i class="fas fa-book"></i> 📚 DOKUMENTASI</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">📖</div>
+                            <h5 class="card-title">README</h5>
+                            <p class="card-text">Panduan instalasi, setup, dan penggunaan dasar aplikasi</p>
+                            <a href="README.md" class="btn btn-primary btn-sm">Baca</a>
+                            <span class="badge-custom badge-guide ms-2">Main Docs</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">🖼️</div>
+                            <h5 class="card-title">Setup Gambar</h5>
+                            <p class="card-text">Dokumentasi lengkap penanganan gambar, upload, dan display</p>
+                            <a href="SETUP_GAMBAR.md" class="btn btn-primary btn-sm">Baca</a>
+                            <span class="badge-custom badge-new ms-2">NEW</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">⚡</div>
+                            <h5 class="card-title">Quick Reference</h5>
+                            <p class="card-text">Quick reference untuk developer, code examples, & checklist</p>
+                            <a href="QUICK_REFERENCE.md" class="btn btn-primary btn-sm">Baca</a>
+                            <span class="badge-custom badge-new ms-2">NEW</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">✅</div>
+                            <h5 class="card-title">Implementation Report</h5>
+                            <p class="card-text">Laporan lengkap implementasi sistem gambar dengan checklist</p>
+                            <a href="IMPLEMENTATION_REPORT.md" class="btn btn-primary btn-sm">Baca</a>
+                            <span class="badge-custom badge-new ms-2">NEW</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Section -->
+        <div class="nav-section">
+            <h2 class="text-white mb-4"><i class="fas fa-tools"></i> 🛠️ TOOLS & UTILITIES</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">🔍</div>
+                            <h5 class="card-title">Quick Check</h5>
+                            <p class="card-text">Verifikasi setup database, folder, dan file gambar</p>
+                            <a href="quick-check.php" class="btn btn-success btn-sm" target="_blank">Jalankan</a>
+                            <span class="badge-custom badge-new ms-2">NEW</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">🎨</div>
+                            <h5 class="card-title">Generate Placeholder</h5>
+                            <p class="card-text">Generate placeholder gambar untuk semua data di database</p>
+                            <a href="generate-placeholders.php" class="btn btn-success btn-sm" target="_blank">Jalankan</a>
+                            <span class="badge-custom badge-new ms-2">NEW</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Section -->
+        <div class="nav-section">
+            <h2 class="text-white mb-4"><i class="fas fa-lock"></i> 🔐 ADMIN & REDAKSI</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">📊</div>
+                            <h5 class="card-title">Dashboard Admin</h5>
+                            <p class="card-text">Kelola konten, lihat statistik, upload gambar artikel</p>
+                            <a href="admin/dashboard.php" class="btn btn-primary btn-sm" target="_blank">Buka</a>
+                            <span class="badge-custom badge-updated ms-2">UPDATED</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">✏️</div>
+                            <h5 class="card-title">Tambah Artikel</h5>
+                            <p class="card-text">Form untuk menambah artikel dengan upload gambar</p>
+                            <a href="admin/tambah_artikel.php" class="btn btn-primary btn-sm" target="_blank">Buka</a>
+                            <span class="badge-custom badge-updated ms-2">UPDATED</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">🔓</div>
+                            <h5 class="card-title">Login</h5>
+                            <p class="card-text">Login dengan akun admin atau redaksi</p>
+                            <a href="login.php" class="btn btn-primary btn-sm" target="_blank">Buka</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Public Section -->
+        <div class="nav-section">
+            <h2 class="text-white mb-4"><i class="fas fa-globe"></i> 🌐 PUBLIC PAGES</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">🏠</div>
+                            <h5 class="card-title">Beranda</h5>
+                            <p class="card-text">Halaman utama website sekolah</p>
+                            <a href="index.php" class="btn btn-info btn-sm" target="_blank">Kunjungi</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">📰</div>
+                            <h5 class="card-title">Berita</h5>
+                            <p class="card-text">Koleksi berita sekolah dengan gambar</p>
+                            <a href="kategori/berita.php" class="btn btn-info btn-sm" target="_blank">Kunjungi</a>
+                            <span class="badge-custom badge-updated ms-2">UPDATED</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">📚</div>
+                            <h5 class="card-title">Artikel</h5>
+                            <p class="card-text">Koleksi artikel edukatif dengan gambar</p>
+                            <a href="kategori/artikel.php" class="btn btn-info btn-sm" target="_blank">Kunjungi</a>
+                            <span class="badge-custom badge-updated ms-2">UPDATED</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">📅</div>
+                            <h5 class="card-title">Kegiatan</h5>
+                            <p class="card-text">Koleksi kegiatan sekolah dengan gambar</p>
+                            <a href="kategori/kegiatan.php" class="btn btn-info btn-sm" target="_blank">Kunjungi</a>
+                            <span class="badge-custom badge-updated ms-2">UPDATED</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="icon-box">🎞️</div>
+                            <h5 class="card-title">Galeri</h5>
+                            <p class="card-text">Galeri foto fasilitas dan kegiatan sekolah</p>
+                            <a href="galeri/galeri.php" class="btn btn-info btn-sm" target="_blank">Kunjungi</a>
+                            <span class="badge-custom badge-updated ms-2">UPDATED</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testing Credentials -->
+        <div class="nav-section">
+            <div class="alert alert-info" role="alert">
+                <h4 class="alert-heading"><i class="fas fa-info-circle"></i> Testing Credentials</h4>
+                <hr>
+                <p><strong>Admin Account:</strong></p>
+                <code>Username: admin | Password: admin123</code>
+                <p class="mt-2"><strong>Redaksi Account:</strong></p>
+                <code>Username: redaksi | Password: redaksi123</code>
+                <p class="mt-2 mb-0"><small>Catatan: Password dienkripsi dengan MD5 di database</small></p>
+            </div>
+        </div>
+
+        <!-- Status Summary -->
+        <div class="nav-section mb-5">
+            <div class="card border-success">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-check-circle text-success"></i> Implementation Status
+                    </h5>
+                    <ul class="mb-0">
+                        <li>✅ Dashboard dengan thumbnail gambar</li>
+                        <li>✅ Upload gambar untuk artikel/berita/kegiatan</li>
+                        <li>✅ Display gambar di kategori dan galeri</li>
+                        <li>✅ Fallback placeholder jika gambar tidak ada</li>
+                        <li>✅ Helper library untuk upload & display</li>
+                        <li>✅ Generator placeholder otomatis</li>
+                        <li>✅ Dokumentasi lengkap (4 file)</li>
+                        <li>✅ Tools untuk testing & troubleshooting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-white text-center py-4">
+            <p>web-sma Documentation Hub | November 2025</p>
+            <small>Untuk pertanyaan atau laporan bug, hubungi administrator.</small>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
