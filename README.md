@@ -69,7 +69,6 @@ Lihat file `SETUP_GAMBAR.md` untuk dokumentasi lengkap penanganan gambar.
 - Untuk perubahan kecil, fork/clone proyek lalu ajukan patch atau kirim file yang diperbarui.
 
 ## Kontak
-- Untuk pertanyaan, hubungi pemelihara proyek (tambahkan email/nomor kontak di sini).
+- Untuk pertanyaan, hubungi pemelihara email:ramaraditya4371@gmail.com.
 
 ---
-File ini dibuat otomatis oleh asisten; beri tahu jika Anda ingin menambahkan detail lain (cara deploy, kredensial demo, dsb.).
